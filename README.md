@@ -104,12 +104,16 @@ Plaintext
 │   └── server/
 │       └── main.go
 ├── internal/
-│   ├── handler/
+│   ├── api/
 │   │   └── url_handler.go
-│   ├── storage/
-│   │   └── postgres.go
-│   └── shortener/
-│       └── shortener.go
+│   ├── app/
+│   │   └── app.go
+│   ├── store/
+│   │   └── database.go
+│   │   └── url_store.go
+│   │   └── user_store.go
+│   └── routes/
+│       └── routs.go
 ├── go.mod
 ├── go.sum
 └── config.yaml
