@@ -2,33 +2,35 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
+
+	"github.com/navid-fn/shorty/internal/utils"
 )
 
-
 type Url struct {
-	ID int
-	CreatedAt time.Time
-	OrginalUrl string
-	ShortCode string
-	Clicked int
+	ID          int       `json:"id"`
+	CreatedAt   time.Time `json:"created_at"`
+	OriginalUrl string    `json:"original_url"`
+	ShortCode   string    `json:"short_code"`
+	Clicked     int       `json:"clicked"`
 }
 
 type PostgresUrlStore struct {
 	db *sql.DB
 }
 
-func NewPostgresPostStore(db *sql.DB) *PostgresUrlStore {
+func NewPostgresUrlStore(db *sql.DB) *PostgresUrlStore {
 	return &PostgresUrlStore{db: db}
 }
 
 type UrlStore interface {
-	CreatetUrl(*Url) (*Url, error)
-	GetUrlByID(id int64) (*Url, error)
-	CheckDuplicateShortCode(code string)(bool, error)
+	CreateUrl(*Url) (*Url, error)
+	GetOrginalUrlByString(code string) (*string, error)
+	CheckDuplicateShortCode(code string) bool
 }
 
-func (pgdb *PostgresUrlStore)CreatetUrl(url *Url) (*Url, error) {
+func (pgdb *PostgresUrlStore) CreateUrl(url *Url) (*Url, error) {
 	tx, err := pgdb.db.Begin()
 	if err != nil {
 		return nil, err
@@ -36,11 +38,17 @@ func (pgdb *PostgresUrlStore)CreatetUrl(url *Url) (*Url, error) {
 	defer tx.Rollback()
 
 	query :=
-		`INSERT INTO urls (orginal_url, short_code)
+		`INSERT INTO urls (original_url, short_code)
 		VALUES ($1, $2)
-		RETURNING id, created_at
+		RETURNING id, created_at,short_code 
 	`
-	err = tx.QueryRow(query, url.OrginalUrl).Scan(&url.ID, &url.CreatedAt)
+	shortCode := utils.GeneratePseudoRandomString(5)
+	for pgdb.CheckDuplicateShortCode(shortCode) {
+		fmt.Println("short code", shortCode)
+		shortCode = utils.GeneratePseudoRandomString(5)
+
+	}
+	err = tx.QueryRow(query, url.OriginalUrl, shortCode).Scan(&url.ID, &url.CreatedAt, &url.ShortCode)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +59,36 @@ func (pgdb *PostgresUrlStore)CreatetUrl(url *Url) (*Url, error) {
 	return url, nil
 }
 
+func (pgdb *PostgresUrlStore) GetOrginalUrlByString(code string) (*string, error) {
+	url := &Url{}
+	query := `
+	SELECT original_url
+	FROM ulrs
+	WHERE short_code = $1
+	`
+	err := pgdb.db.QueryRow(query, code).Scan(&url.OriginalUrl)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &url.OriginalUrl, nil
+}
 
-func (pgdb *PostgresUrlStore)CheckDuplicateShortCode() bool{
-	return true
+func (pgdb *PostgresUrlStore) CheckDuplicateShortCode(code string) bool {
+	var exists bool
+	query := `
+	SELECT EXISTS
+	(
+		SELECT 1
+		FROM ulrs
+		WHERE short_code = $1
+	)
+	`
+	err := pgdb.db.QueryRow(query, code).Scan(&exists)
+	if err != nil || err == sql.ErrNoRows {
+		return false
+	}
+	return exists
 }

@@ -1,22 +1,29 @@
 package utils
 
 import (
+	"encoding/json"
 	"math/rand"
+	"net/http"
 	"strings"
 	"time"
 )
 
-func generatePseudoRandomString(length int) string {
+func GeneratePseudoRandomString(length int) string {
 	const letters = "abcdefghijklmnopqrstuvwxyz"
-	
+
 	// Create a new random generator seeded with the current time.
 	// This is important!
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	var sb strings.Builder
-	for i := 0; i < length; i++ {
+	for range length {
 		// Pick a random character from the letters string
 		sb.WriteByte(letters[r.Intn(len(letters))])
 	}
 	return sb.String()
+}
+
+func WriteJson(w http.ResponseWriter, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(v)
 }
