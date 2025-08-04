@@ -16,6 +16,8 @@ func SetupRoutes(app *app.Application) *chi.Mux {
 
 
   // user
+  r.Post("/register/", app.UserHandler.Register)
+  r.Post("/login/", app.UserHandler.Login)
 
 	return r
 

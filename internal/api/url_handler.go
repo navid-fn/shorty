@@ -34,7 +34,7 @@ func (ul *UrlHandler) HandleCreateUrl(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, "error detected")
 		return
 	}
-	utils.WriteJson(w, http.StatusOK ,createdUrl)
+	utils.WriteJson(w, http.StatusOK, createdUrl)
 }
 
 func (ul *UrlHandler) HandleRedirectUrl(w http.ResponseWriter, r *http.Request) {
@@ -53,5 +53,5 @@ func (ul *UrlHandler) HandleRedirectUrl(w http.ResponseWriter, r *http.Request) 
 	}
 	fullUrl := "https://" + *originalUrl
 	http.Redirect(w, r, fullUrl, http.StatusFound)
-	
+
 }

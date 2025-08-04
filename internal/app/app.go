@@ -32,14 +32,17 @@ func NewApplication() (*Application, error) {
 
 	// store here
 	urlStore := store.NewPostgresUrlStore(pgxdb)
+	userStore := store.NewPostgresUserStore(pgxdb)
 
 	// handler here
 	urlHandler := api.NewUrlHandler(urlStore)
+	userHandler := api.NewUserHandler(userStore)
 
 	app := &Application{
 		Logger:     logger,
 		DB:         pgxdb,
 		UrlHandler: urlHandler,
+		UserHandler: userHandler,
 	}
 	return app, nil
 }
