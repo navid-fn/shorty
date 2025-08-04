@@ -23,7 +23,13 @@ func GeneratePseudoRandomString(length int) string {
 	return sb.String()
 }
 
-func WriteJson(w http.ResponseWriter, v any) {
+func WriteJson(w http.ResponseWriter,status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(v)
+}
+
+
+func WriteError(w http.ResponseWriter, status int, msg string) {
+	WriteJson(w, status, map[string]string{"error": msg})
 }

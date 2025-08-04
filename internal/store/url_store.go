@@ -63,7 +63,7 @@ func (pgdb *PostgresUrlStore) GetOrginalUrlByString(code string) (*string, error
 	url := &Url{}
 	query := `
 	SELECT original_url
-	FROM ulrs
+	FROM urls 
 	WHERE short_code = $1
 	`
 	err := pgdb.db.QueryRow(query, code).Scan(&url.OriginalUrl)
@@ -82,7 +82,7 @@ func (pgdb *PostgresUrlStore) CheckDuplicateShortCode(code string) bool {
 	SELECT EXISTS
 	(
 		SELECT 1
-		FROM ulrs
+		FROM urls 
 		WHERE short_code = $1
 	)
 	`
