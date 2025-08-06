@@ -26,7 +26,7 @@ func NewPostgresUserStore(db *sql.DB) *PostgresUserStore {
 
 type UserStore interface {
 	CreateUser(req *model.UserRegister) (*User, error)
-	Authenticate(req *model.UserLogin) (bool, error)
+	Authenticate(req *model.UserLogin) (*User, error)
 }
 
 func (pgdb *PostgresUserStore) CreateUser(userReq *model.UserRegister) (*User, error) {
@@ -57,23 +57,27 @@ func (pgdb *PostgresUserStore) CreateUser(userReq *model.UserRegister) (*User, e
 	return user, nil
 }
 
-func (pgdb *PostgresUserStore) Authenticate(req *model.UserLogin) (bool, error) {
+func (pgdb *PostgresUserStore) Authenticate(req *model.UserLogin) (*User, error) {
 	var hashedPassword string
+	user := &User{}
+
 	query := `
-	SELECT password_hash
+	SELECT password_hash, id, username, email
 	FROM users 
 	WHERE username = $1
 	`
-	err := pgdb.db.QueryRow(query, req.Username).Scan(&hashedPassword)
+	err := pgdb.db.QueryRow(query, req.Username).Scan(&hashedPassword, &user.ID,
+		&user.UserName, &user.Email)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, nil
+			return nil, nil
 		}
-		return false, err
+		return nil, err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(req.Password))
 	if err != nil {
-		return false, errors.New("invalid credentials")
+		return nil, errors.New("invalid credentials")
 	}
-	return true, nil
+	return user, nil
 }

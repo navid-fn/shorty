@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	authmiddleware "github.com/navid-fn/shorty/internal/middleware"
 	"github.com/navid-fn/shorty/internal/store"
 	"github.com/navid-fn/shorty/internal/utils"
 )
@@ -21,6 +22,14 @@ func NewUrlHandler(urlStore store.UrlStore) *UrlHandler {
 }
 
 func (ul *UrlHandler) HandleCreateUrl(w http.ResponseWriter, r *http.Request) {
+  claims, ok := authmiddleware.GetUserClaims(r.Context())
+  if !ok {
+      http.Error(w, "Could not retrieve user information", http.StatusInternalServerError)
+      return
+  }
+
+  userID := claims.UserID
+
 	var url store.Url
 	err := json.NewDecoder(r.Body).Decode(&url)
 	if err != nil {
@@ -28,7 +37,7 @@ func (ul *UrlHandler) HandleCreateUrl(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, http.StatusInternalServerError, "error detected")
 		return
 	}
-	createdUrl, err := ul.urlStore.CreateUrl(&url)
+	createdUrl, err := ul.urlStore.CreateUrl(&url, userID)
 	if err != nil {
 		fmt.Println("Error Occurred..", err)
 		utils.WriteError(w, http.StatusInternalServerError, "error detected")

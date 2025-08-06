@@ -2,7 +2,6 @@ package store
 
 import (
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/navid-fn/shorty/internal/utils"
@@ -25,12 +24,12 @@ func NewPostgresUrlStore(db *sql.DB) *PostgresUrlStore {
 }
 
 type UrlStore interface {
-	CreateUrl(*Url) (*Url, error)
+	CreateUrl(*Url, int64) (*Url, error)
 	GetOrginalUrlByString(code string) (*string, error)
 	CheckDuplicateShortCode(code string) bool
 }
 
-func (pgdb *PostgresUrlStore) CreateUrl(url *Url) (*Url, error) {
+func (pgdb *PostgresUrlStore) CreateUrl(url *Url, userID int64) (*Url, error) {
 	tx, err := pgdb.db.Begin()
 	if err != nil {
 		return nil, err
@@ -38,17 +37,15 @@ func (pgdb *PostgresUrlStore) CreateUrl(url *Url) (*Url, error) {
 	defer tx.Rollback()
 
 	query :=
-		`INSERT INTO urls (original_url, short_code)
-		VALUES ($1, $2)
+		`INSERT INTO urls (original_url, short_code, user_id)
+		VALUES ($1, $2, $3)
 		RETURNING id, created_at,short_code 
 	`
 	shortCode := utils.GeneratePseudoRandomString(5)
 	for pgdb.CheckDuplicateShortCode(shortCode) {
-		fmt.Println("short code", shortCode)
 		shortCode = utils.GeneratePseudoRandomString(5)
-
 	}
-	err = tx.QueryRow(query, url.OriginalUrl, shortCode).Scan(&url.ID, &url.CreatedAt, &url.ShortCode)
+	err = tx.QueryRow(query, url.OriginalUrl, shortCode, userID).Scan(&url.ID, &url.CreatedAt, &url.ShortCode)
 	if err != nil {
 		return nil, err
 	}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/navid-fn/shorty/internal/api/model"
+	authmiddleware "github.com/navid-fn/shorty/internal/middleware"
 	"github.com/navid-fn/shorty/internal/store"
 	"github.com/navid-fn/shorty/internal/utils"
 )
@@ -25,13 +26,11 @@ func (ul *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Basic validation
 	if req.Username == "" || req.Email == "" || req.Password == "" {
 		utils.WriteError(w, http.StatusBadRequest, "Username, email, and password are required")
 		return
 	}
 
-	// Create the user
 	user, err := ul.userStore.CreateUser(&req)
 	if err != nil {
 		fmt.Println("error Occurred", err)
@@ -43,7 +42,6 @@ func (ul *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (ul *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-
 	var req model.UserLogin
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "Invalid request body")
@@ -55,14 +53,17 @@ func (ul *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := ul.userStore.Authenticate(&req)
+	user, err := ul.userStore.Authenticate(&req)
 	if err != nil {
 		utils.WriteError(w, http.StatusBadRequest, "invalid username or password")
 		return
 	}
+	token, err := authmiddleware.GenerateJWT(int64(user.ID), user.UserName)
+	if err != nil {
+		fmt.Println(err)
+		utils.WriteError(w, http.StatusInternalServerError, "Some errror Occurred")
+	}
 
-	utils.WriteJson(w, http.StatusOK, result)
+	utils.WriteJson(w, http.StatusOK, map[string]string{"token": token})
 
 }
-
-
