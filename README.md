@@ -1,130 +1,144 @@
+# Shorty - A Robust URL Shortener in Go
 
-# Production-Ready REST API: "Shorty" - A URL Shortener
+Shorty is a high-performance, production-ready URL shortening service built with Go. It provides a clean RESTful API for creating, managing, and tracking short links, complete with user authentication and advanced features. This project demonstrates best practices in Go backend development, including clean architecture, secure authentication, and concurrent processing.
 
-This is a classic project that touches on all the fundamentals of backend development in a clean, understandable package.
+## ✨ Features
 
-### 🎯 Objective
-
-Build a robust, testable, and configurable RESTful API that takes a long URL and returns a short, unique code that redirects back to the original URL.
-
-### 🛠️ Core Concepts Demonstrated
-
-- REST API Design (CRUD operations)
+- **Secure User Authentication:** User registration and login using JWT (JSON Web Tokens).
     
-- Database Interaction (SQL)
+- **URL Shortening:** Create short, unique, and easy-to-share links.
     
-- Configuration Management (from files or environment variables)
+- **Custom Short Codes:** Users can propose their own custom aliases for links.
     
-- Structured Logging
+- **Click Analytics:** Track the number of clicks for each short link.
     
-- Routing & Middleware
+- **Link Expiration:** Set an optional expiration time for links.
     
-- Unit & Integration Testing
+- **User Dashboard:** An endpoint for authenticated users to view all the links they have created.
     
-- Graceful Shutdown
+- **RESTful API:** A well-defined API for all interactions.
+    
+- **High Performance:** Built with Go for speed and concurrency.
     
 
-### 💻 Technology Stack
+## 🛠️ Tech Stack
 
-- **Go:** For the core logic.
+- **Backend:** Go
     
-- **Router:** `chi` (A great, lightweight router that embraces standard library concepts).
+- **Router:** `chi`
     
-- **Database:** PostgreSQL (A powerful, open-source SQL database).
+- **Database:** PostgreSQL
     
-- **DB Driver/Toolkit:** `sqlx` (An excellent extension to the standard `database/sql` package).
+- **Authentication:** `golang-jwt` for JWT implementation
     
-- **Configuration:** `viper` (For handling configuration from files and environment variables).
+- **Password Hashing:** `bcrypt`
     
-- **Logging:** `slog` (Go's new structured logging library).
+- **Configuration:** `viper`
     
 
----
+## 🚀 Getting Started
 
-### 📋 Step-by-Step Guide
+### Prerequisites
 
-1. **Project Setup & Configuration**
+- Go (version 1.21 or newer)
     
-    - Initialize your Go module: `go mod init github.com/your-username/shorty`
+- PostgreSQL (running locally or in Docker)
+    
+- Docker (optional, for database)
+    
+
+### Installation
+
+1. **Clone the repository:**
+    
+    ```
+    git clone https://github.com/your-username/shorty.git
+    cd shorty
+    ```
+    
+2. **Set up environment variables:**
+    
+    - Create a `.env` file in the root of the project.
         
-    - Install dependencies: `go get github.com/go-chi/chi/v5 github.com/jmoiron/sqlx github.com/lib/pq github.com/spf13/viper`
+    - Add the following configuration:
         
-    - Set up `viper` to read a `config.yaml` file. This file should contain the server port and database connection string.
-        
-2. **Database Layer**
     
-    - Define your database schema in a `.sql` file. You'll need one table, `urls`, with columns like `id` (auto-incrementing integer, primary key), `short_code` (text, unique index), `original_url` (text), and `created_at` (timestamp).
-        
-    - In a new `storage` package, create a `PostgresStore` struct that holds your `*sqlx.DB` connection.
-        
-    - Write the methods for this struct:
-        
-        - `SaveURL(originalURL string) (string, error)`: Inserts the URL, generates a `short_code` (e.g., by base62-encoding the `id`), and returns the code.
-            
-        - `GetURL(shortCode string) (string, error)`: Queries the database for a `short_code` and returns the `original_url`.
-            
-3. **HTTP Handler Layer**
+    ```
+    # Server configuration
+    SERVER_PORT=8080
     
-    - In a new `handler` package, create your HTTP handlers. They should accept the storage layer as a dependency.
-        
-    - `ShortenHandler(w http.ResponseWriter, r *http.Request)`: Decodes a JSON request, calls `storage.SaveURL()`, and writes a JSON response with the short code.
-        
-    - `RedirectHandler(w http.ResponseWriter, r *http.Request)`: Gets the `shortCode` from the URL path, calls `storage.GetURL()`, and performs a `301 Moved Permanently` redirect.
-        
-4. **Main Application (`cmd/server/main.go`)**
+    # Database connection
+    DB_URL="postgres://user:password@localhost:5432/shorty?sslmode=disable"
     
-    - Load configuration, initialize the logger, and connect to the database.
-        
-    - Instantiate your `storage` and `handler` layers.
-        
-    - Set up your `chi` router with routes:
-        
-        - `router.Post("/shorten", handler.ShortenHandler)`
-            
-        - `router.Get("/{shortCode}", handler.RedirectHandler)`
-            
-    - Start the HTTP server and implement **graceful shutdown**.
-        
-5. **Testing**
+    # JWT Secret Key (change this to a long, random string)
+    JWT_SECRET="your-super-secret-key-for-jwt"
+    ```
     
-    - Write **unit tests** for your storage functions.
-        
-    - Write **integration tests** for your HTTP handlers using the `net/http/httptest` package.
-        
-
----
-
-### 📂 Suggested Project Structure
-
-Plaintext
-
-```
-/shorty
-├── cmd/
-│   └── server/
-│       └── main.go
-├── internal/
-│   ├── api/
-│   │   └── url_handler.go
-│   ├── app/
-│   │   └── app.go
-│   ├── store/
-│   │   └── database.go
-│   │   └── url_store.go
-│   │   └── user_store.go
-│   └── routes/
-│       └── routs.go
-├── go.mod
-├── go.sum
-└── config.yaml
-```
-
----
-
-### ✨ Going Further
-
-- **Add a Rate Limiter:** Use middleware to limit requests.
+3. **Run database migrations:**
     
-- **Add Analytics:** Track how many times each short URL is clicked.
+    - Connect to your PostgreSQL instance and execute the SQL commands found in the `/db/migrations` directory to create the `users` and `urls` tables.
+        
+4. **Install dependencies and run the application:**
     
-- **Swagger/OpenAPI Docs:** Generate API documentation for your endpoints.
+    ```
+    go mod tidy
+    go run ./cmd/server/main.go
+    ```
+    
+    The server will start on `http://localhost:8080`.
+    
+
+## ⚙️ API Endpoints
+
+### Authentication
+
+|            |                    |               |                                         |
+| ---------- | ------------------ | ------------- | --------------------------------------- |
+| **Method** | **Path**           | **Protected** | **Description**                         |
+| `POST`     | `/api/v1/register` | No            | Creates a new user account.             |
+| `POST`     | `/api/v1/login`    | No            | Authenticates a user and returns a JWT. |
+
+### URLs
+
+|   |   |   |   |
+|---|---|---|---|
+|**Method**|**Path**|**Protected**|**Description**|
+|`POST`|`/api/v1/shorten`|**Yes**|Creates a new short link.|
+|`GET`|`/{shortCode}`|No|Redirects to the original long URL.|
+|`GET`|`/api/v1/stats/{shortCode}`|No|Gets click analytics for a short link.|
+|`GET`|`/api/v1/my-links`|**Yes**|Gets all links created by the logged-in user.|
+
+### Example Usage (`curl`)
+
+1. **Register a user:**
+    
+    ```
+    curl -X POST http://localhost:8080/api/v1/register \
+    -H "Content-Type: application/json" \
+    -d '{"username": "testuser", "email": "test@example.com", "password": "strongpassword"}'
+    ```
+    
+2. **Login to get a token:**
+    
+    ```
+    curl -X POST http://localhost:8080/api/v1/login \
+    -H "Content-Type: application/json" \
+    -d '{"email": "test@example.com", "password": "strongpassword"}'
+    ```
+    
+    _(Copy the token from the response for the next step)_
+    
+3. **Create a short link:**
+    
+    ```
+    TOKEN="your-jwt-token-here"
+    curl -X POST http://localhost:8080/api/v1/shorten \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $TOKEN" \
+    -d '{"url": "https://www.google.com/search?q=golang"}'
+    ```
+    
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](https://www.google.com/search?q=LICENSE "null") file for details.
