@@ -11,7 +11,9 @@ import (
 )
 
 func Open() (*sql.DB, error) {
-	dbConfig, err := utils.LoadDBConfig()
+	config, err := utils.LoadConfig()
+
+	dbConfig := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", config.DBHost, config.DBusername, config.DBpassword, config.DBname, config.DBport)
 	if err != nil {
 		return nil, fmt.Errorf("db Open: %w", err)
 	}
@@ -19,14 +21,14 @@ func Open() (*sql.DB, error) {
 	db, err := sql.Open("pgx", dbConfig)
 	if err != nil {
 		return nil, fmt.Errorf("db Open: %w", err)
-	} 
+	}
 	fmt.Println("Database connected...")
 	return db, nil
-	
 }
+
 func MigrateFS(db *sql.DB, migrationsFs fs.FS, dir string) error {
 	goose.SetBaseFS(migrationsFs)
-	defer func ()  {
+	defer func() {
 		goose.SetBaseFS(nil)
 	}()
 	return Migrations(db, dir)
@@ -41,5 +43,5 @@ func Migrations(db *sql.DB, dir string) error {
 	if err != nil {
 		return fmt.Errorf("goose up: %w", err)
 	}
-return nil	
+	return nil
 }

@@ -1,13 +1,18 @@
 package utils
 
 import (
-	"fmt"
-
 	"github.com/spf13/viper"
 )
 
+type Config struct {
+	DBHost     string `mapstructure:"DBHOST"`
+	DBname     string `mapstructure:"DBNAME"`
+	DBpassword string `mapstructure:"DBPASSWORD"`
+	DBport     string `mapstructure:"DBPORT"`
+	DBusername string `mapstructure:"DBUSERNAME"`
+}
 
-func LoadDBConfig() (c string, err error) {
+func LoadConfig() (c Config, err error) {
 	viper.AddConfigPath(".")
 	viper.SetConfigName(".env")
 	viper.SetConfigType("env")
@@ -16,15 +21,11 @@ func LoadDBConfig() (c string, err error) {
 
 	err = viper.ReadInConfig()
 	if err != nil {
-		return "", err
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
+			return
+		}
 	}
 
-	dbUser := viper.Get("DBUSERNAME").(string)
-	dbPassword := viper.Get("DBPASSWORD").(string)
-	dbName := viper.Get("DBNAME").(string)
-	dbPort := viper.Get("DBPORT").(string)
-	dbHost := viper.Get("DBHOST").(string)
-
-	dbConfig := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", dbHost, dbUser, dbPassword, dbName, dbPort)
-	return dbConfig, nil
+	err = viper.Unmarshal(&c)
+	return
 }
