@@ -10,13 +10,9 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-func Open() (*sql.DB, error) {
-	config, err := utils.LoadConfig()
+func Open(config *utils.Config) (*sql.DB, error) {
 
 	dbConfig := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", config.DBHost, config.DBusername, config.DBpassword, config.DBname, config.DBport)
-	if err != nil {
-		return nil, fmt.Errorf("db Open: %w", err)
-	}
 
 	db, err := sql.Open("pgx", dbConfig)
 	if err != nil {

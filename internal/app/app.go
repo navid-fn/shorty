@@ -9,6 +9,7 @@ import (
 
 	"github.com/navid-fn/shorty/internal/api"
 	"github.com/navid-fn/shorty/internal/store"
+	"github.com/navid-fn/shorty/internal/utils"
 	"github.com/navid-fn/shorty/migrations"
 )
 
@@ -20,7 +21,12 @@ type Application struct {
 }
 
 func NewApplication() (*Application, error) {
-	pgxdb, err := store.Open()
+	config, err := utils.LoadConfig()
+	if err != nil {
+		panic(err)
+	}
+	pgxdb, err := store.Open(&config)
+
 	if err != nil {
 		return nil, err
 	}
