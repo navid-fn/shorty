@@ -16,7 +16,7 @@ func SetupRoutes(app *app.Application) *chi.Mux {
   r.Post("/api/v1/register/", app.UserHandler.Register)
   r.Post("/api/v1/login/", app.UserHandler.Login)
 
-  r.Get("{code}", app.UrlHandler.HandleRedirectUrl)
+  r.Get("/{code}", app.UrlHandler.HandleRedirectUrl)
 
 
 	r.Group(func(r chi.Router) {

@@ -6,15 +6,21 @@ import (
 	"io/fs"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/navid-fn/shorty/internal/utils"
 	"github.com/pressly/goose/v3"
 )
 
 func Open() (*sql.DB, error) {
-	db, err := sql.Open("pgx", "host=localhost user=admin1 password=junk123# dbname=shorty port=5432 sslmode=disable")
+	dbConfig, err := utils.LoadDBConfig()
+	if err != nil {
+		return nil, fmt.Errorf("db Open: %w", err)
+	}
+
+	db, err := sql.Open("pgx", dbConfig)
 	if err != nil {
 		return nil, fmt.Errorf("db Open: %w", err)
 	} 
-	fmt.Println("DataBase connected...")
+	fmt.Println("Database connected...")
 	return db, nil
 	
 }
